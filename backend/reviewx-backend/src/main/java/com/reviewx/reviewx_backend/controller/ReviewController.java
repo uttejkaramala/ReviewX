@@ -53,5 +53,4 @@ public class ReviewController {
         FindingResponse updated = reviewService.updateFindingStatus(id, request.status());
         return ResponseEntity.ok(updated);
     }
-	
 }

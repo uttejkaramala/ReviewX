@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.reviewx.reviewx_backend.analyzer.AnalysisResult;
@@ -24,7 +25,7 @@ import com.reviewx.reviewx_backend.repository.FindingCategoryRepository;
 import com.reviewx.reviewx_backend.repository.ReviewFindingRepository;
 import com.reviewx.reviewx_backend.repository.SeverityLevelRepository;
 
-
+@Service
 public class ReviewService {
 
 	private final CodeAnalyzer codeAnalyzer;

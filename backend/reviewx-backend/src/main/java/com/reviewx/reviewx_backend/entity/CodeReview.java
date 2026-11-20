@@ -21,9 +21,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
 
 @Entity
+@Setter
+@Getter
 @Table(name = "code_reviews")
 public class CodeReview {
 

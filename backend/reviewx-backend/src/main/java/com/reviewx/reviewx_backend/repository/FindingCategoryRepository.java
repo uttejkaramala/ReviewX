@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.reviewx.reviewx_backend.entity.FindingCategory;
 
-public interface FindingCategoryRespository extends JpaRepository<FindingCategory, Long>{
+public interface FindingCategoryRepository extends JpaRepository<FindingCategory, Long>{
 
 	Optional<FindingCategory> findByName(String name) ;
  }

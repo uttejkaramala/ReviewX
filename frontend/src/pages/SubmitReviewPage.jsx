@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { submitCodeReview } from "../api/reviewApi";
+import "./SubmitReviewPage.css";
 
 const SAMPLE_JAVA_CODE = `public class UserService {
     private static final String API_SECRET = "sk-live-secret-9981";
@@ -64,9 +65,7 @@ function SubmitReviewPage() {
             disabled={loading}
           />
 
-          <div
-            style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}
-          >
+          <div className="form-actions">
             <button
               type="submit"
               className="btn btn-primary"

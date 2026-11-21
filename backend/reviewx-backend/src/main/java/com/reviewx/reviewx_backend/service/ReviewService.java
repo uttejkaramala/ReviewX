@@ -4,6 +4,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,11 +80,9 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReviewResponse> getAllReviews() {
-        return codeReviewRepository.findAllByOrderByCreatedAtDesc()
-                .stream()
-                .map(review -> toReviewResponse(review, false))
-                .toList();
+    public Page<ReviewResponse> getAllReviews(Pageable pageable) {
+    	return codeReviewRepository.findAll(pageable)
+                .map(review -> toReviewResponse(review, false));
     }
 
     @Transactional(readOnly = true)
@@ -116,8 +116,8 @@ public class ReviewService {
                 .orElseThrow(() -> new IllegalStateException("Reference severity data missing in database"));
     }
 
-    private ReviewResponse toReviewResponse(CodeReview review, boolean includeFindings) {
-        List<FindingResponse> findingDtos = includeFindings
+    private ReviewResponse toReviewResponse(CodeReview review, boolean includeDetails) {
+        List<FindingResponse> findingDtos = includeDetails
                 ? review.getFindings().stream()
                         .sorted(Comparator.comparingInt(f -> f.getSeverity().getPriorityOrder()))
                         .map(this::toFindingResponse)
@@ -128,7 +128,7 @@ public class ReviewService {
 
         return new ReviewResponse(
                 review.getId(),
-                review.getSubmittedCode(),
+                includeDetails ? review.getSubmittedCode() : null,
                 review.getStatus(),
                 review.getSummary(),
                 count,

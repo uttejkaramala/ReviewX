@@ -1,7 +1,9 @@
 package com.reviewx.reviewx_backend.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,8 +39,9 @@ public class ReviewController {
     }
 	
 	@GetMapping("/reviews")
-    public ResponseEntity<List<ReviewResponse>> getAllReviews() {
-        return ResponseEntity.ok(reviewService.getAllReviews());
+    public ResponseEntity<Page<ReviewResponse>> getAllReviews(
+            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(reviewService.getAllReviews(pageable));
     }
 	
 	@GetMapping("/reviews/{id}")

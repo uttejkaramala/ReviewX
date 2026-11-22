@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getReviewById } from "../api/reviewApi";
 import FindingCard from "../components/FindingCard";
+import "./ReviewDetailsPage.css";
 
 function ReviewDetailsPage() {
   const { id } = useParams();
@@ -53,12 +54,27 @@ function ReviewDetailsPage() {
   };
 
   if (loading) {
-    return <div className="state-box">Loading review results...</div>;
+    return (
+      <div className="page-transition">
+        <div className="page-header">
+          <div className="skeleton skel-title" />
+          <div className="skeleton skel-subtitle" />
+        </div>
+        <div className="skeleton skel-strip" />
+        <div className="split-layout">
+          <div className="skeleton skel-code-box" />
+          <div>
+            <div className="skeleton skel-finding-card" />
+            <div className="skeleton skel-finding-card" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div>
+      <div className="page-transition">
         <div className="alert-error">{error}</div>
         <Link to="/" className="btn btn-secondary">
           Back to New Review
@@ -92,7 +108,7 @@ function ReviewDetailsPage() {
   );
 
   return (
-    <div>
+    <div className="page-transition">
       <div className="page-header-row">
         <div className="page-header">
           <h1>Review #{review.id}</h1>

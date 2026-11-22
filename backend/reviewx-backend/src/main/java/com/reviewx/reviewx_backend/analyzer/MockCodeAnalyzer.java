@@ -3,11 +3,13 @@ package com.reviewx.reviewx_backend.analyzer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.reviewx.reviewx_backend.analyzer.AnalysisResult.AnalyzedFinding;
 
 @Component
+@ConditionalOnProperty(name = "reviewx.analyzer.provider", havingValue = "mock", matchIfMissing = true)
 public class MockCodeAnalyzer implements CodeAnalyzer{
 
 	@Override

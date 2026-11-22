@@ -6,9 +6,11 @@ export const submitCodeReview = async (code) => {
   return response.data;
 };
 
-// GET /api/reviews -> returns List<ReviewResponse>
-export const getAllReviews = async () => {
-  const response = await axiosClient.get("/reviews");
+// GET /api/reviews?page=0&size=5 -> returns Spring Data Page<ReviewResponse>
+export const getAllReviews = async (page = 0, size = 6) => {
+  const response = await axiosClient.get("/reviews", {
+    params: { page, size },
+  });
   return response.data;
 };
 

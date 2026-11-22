@@ -9,17 +9,16 @@
 }
 
 .navbar-brand {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 800;
   color: var(--text-primary);
   text-decoration: none;
-  letter-spacing: -0.03em;
-  display: flex;
+  letter-spacing: -0.04em;
+  display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
 }
 
-.navbar-brand span {
+.navbar-brand-accent {
   color: var(--accent-red);
 }
 
@@ -35,7 +34,9 @@
   font-size: 0.92rem;
   padding: 0.45rem 0.9rem;
   border-radius: 6px;
-  transition: all 0.15s;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
 }
 
 .nav-link:hover {

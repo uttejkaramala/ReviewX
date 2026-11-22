@@ -11,6 +11,10 @@
   line-height: 1.55;
   resize: vertical;
   margin-bottom: 1rem;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    opacity 0.2s ease;
 }
 
 .code-textarea:focus {
@@ -19,8 +23,113 @@
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
 }
 
+.code-textarea:disabled {
+  opacity: 0.7;
+}
+
 .form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.form-buttons {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+}
+
+.line-counter {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* AI Analysis Progress Panel */
+@keyframes spinRing {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ai-progress-panel {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background-color: var(--bg-muted);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  animation: pageFadeIn 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.ai-progress-panel.is-complete {
+  background-color: var(--success-soft);
+  border-color: var(--success-border);
+}
+
+.ai-progress-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+.ai-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--accent-red-border);
+  border-top-color: var(--accent-red);
+  border-radius: 50%;
+  animation: spinRing 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.ai-check-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--success);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-stage-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ai-stage-subtitle {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.ai-progress-track {
+  width: 100%;
+  height: 6px;
+  background-color: var(--border-color);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ai-progress-fill {
+  height: 100%;
+  background-color: var(--accent-red);
+  border-radius: 999px;
+  transition:
+    width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.25s ease;
+}
+
+.ai-progress-panel.is-complete .ai-progress-fill {
+  background-color: var(--success);
 }

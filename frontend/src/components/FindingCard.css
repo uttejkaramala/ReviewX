@@ -63,3 +63,8 @@
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
+
+.finding-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}

@@ -49,7 +49,10 @@
   background-color: var(--bg-surface);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .pill-btn:hover {
@@ -112,7 +115,9 @@
   display: flex;
   padding: 0 1rem 0 0;
   border-left: 3px solid transparent;
-  transition: background-color 0.15s;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .code-line-issue {
@@ -141,4 +146,31 @@
 
 .line-content {
   white-space: pre;
+}
+
+/* Details Skeleton Shapes */
+.skel-title {
+  width: 220px;
+  height: 28px;
+  margin-bottom: 0.5rem;
+}
+
+.skel-subtitle {
+  width: 380px;
+  max-width: 100%;
+  height: 18px;
+}
+
+.skel-strip {
+  height: 54px;
+  margin-bottom: 1.5rem;
+}
+
+.skel-code-box {
+  height: 360px;
+}
+
+.skel-finding-card {
+  height: 190px;
+  margin-bottom: 1rem;
 }

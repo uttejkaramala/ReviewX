@@ -9,7 +9,7 @@ function ReviewHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const PAGE_SIZE = 8;
+  const PAGE_SIZE = 5;
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -30,25 +30,50 @@ function ReviewHistoryPage() {
     fetchHistory();
   }, [currentPage]);
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   if (loading) {
-    return <div className="state-box">Loading review history...</div>;
+    return (
+      <div className="page-transition">
+        <div className="page-header-row">
+          <div className="page-header">
+            <h1>Review History</h1>
+            <p>Fetching review records...</p>
+          </div>
+        </div>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <div key={n} className="skeleton skel-history-card" />
+        ))}
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="alert-error">{error}</div>;
+    return (
+      <div className="page-transition">
+        <div className="alert-error">{error}</div>
+      </div>
+    );
   }
 
   const reviews = pageData?.content || [];
+  const pageMeta = pageData?.page ?? pageData ?? {};
+  const totalElements = pageMeta.totalElements ?? reviews.length;
+  const totalPages = pageMeta.totalPages ?? 1;
+  const isFirstPage = currentPage <= 0;
+  const isLastPage = currentPage + 1 >= totalPages;
 
   return (
-    <div>
+    <div className="page-transition">
       <div className="page-header-row">
         <div className="page-header">
           <h1>Review History</h1>
           <p>
-            {pageData?.totalElements ?? 0} total{" "}
-            {pageData?.totalElements === 1 ? "review" : "reviews"} stored in
-            PostgreSQL.
+            {totalElements} total {totalElements === 1 ? "review" : "reviews"}{" "}
+            stored in PostgreSQL.
           </p>
         </div>
         <Link to="/" className="btn btn-primary">
@@ -92,27 +117,27 @@ function ReviewHistoryPage() {
             </div>
           ))}
 
-          {pageData.totalPages > 1 && (
+          {totalPages > 1 && (
             <div className="pagination-bar">
               <span className="pagination-info">
-                Page <strong>{pageData.number + 1}</strong> of{" "}
-                <strong>{pageData.totalPages}</strong>
+                Page <strong>{currentPage + 1}</strong> of{" "}
+                <strong>{totalPages}</strong>
               </span>
 
               <div className="pagination-controls">
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  disabled={pageData.first}
-                  onClick={() => setCurrentPage((prev) => prev - 1)}
+                  disabled={isFirstPage}
+                  onClick={() => handlePageChange(currentPage - 1)}
                 >
                   Previous
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  disabled={pageData.last}
-                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  disabled={isLastPage}
+                  onClick={() => handlePageChange(currentPage + 1)}
                 >
                   Next
                 </button>

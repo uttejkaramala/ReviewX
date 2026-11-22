@@ -40,7 +40,7 @@ public class ReviewController {
 	
 	@GetMapping("/reviews")
     public ResponseEntity<Page<ReviewResponse>> getAllReviews(
-            @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(reviewService.getAllReviews(pageable));
     }
 	

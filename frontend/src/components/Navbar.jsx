@@ -5,7 +5,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <NavLink to="/" className="navbar-brand">
-        Review<span>X</span>
+        Review<span className="navbar-brand-accent">X</span>
       </NavLink>
       <div className="navbar-links">
         <NavLink

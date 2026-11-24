@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { submitCodeReview } from "../api/reviewApi";
+import { submitCodeReview, submitGitHubPrReview } from "../api/reviewApi";
 import "./SubmitReviewPage.css";
 
 const SAMPLE_JAVA_CODE = `public class UserService {
@@ -12,7 +12,10 @@ const SAMPLE_JAVA_CODE = `public class UserService {
     }
 }`;
 
-const ANALYSIS_STEPS = [
+const SAMPLE_PR_URL =
+  "https://github.com/spring-projects/spring-petclinic/pull/950";
+
+const SNIPPET_STEPS = [
   {
     title: "Parsing code structure & line numbers...",
     subtitle: "Preparing source context for deep static inspection",
@@ -35,41 +38,80 @@ const ANALYSIS_STEPS = [
   },
 ];
 
+const PR_STEPS = [
+  {
+    title: "Connecting to GitHub REST API...",
+    subtitle: "Fetching Pull Request metadata and modified file diffs",
+    progress: 24,
+  },
+  {
+    title: "Mapping unified diff hunk line numbers...",
+    subtitle: "Filtering lockfiles and aligning added (+) lines",
+    progress: 50,
+  },
+  {
+    title: "Running multi-file AI security & bug review...",
+    subtitle: "Analyzing cross-file logic and regressions",
+    progress: 78,
+  },
+  {
+    title: "Saving Pull Request audit report...",
+    subtitle: "Persisting findings mapped by file path and line",
+    progress: 92,
+  },
+];
+
 function SubmitReviewPage() {
+  const [mode, setMode] = useState("SNIPPET"); // SNIPPET | GITHUB_PR
   const [code, setCode] = useState("");
+  const [prUrl, setPrUrl] = useState("");
   const [status, setStatus] = useState("IDLE"); // IDLE | ANALYZING | COMPLETE
   const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const isBusy = status === "ANALYZING" || status === "COMPLETE";
+  const activeSteps = mode === "GITHUB_PR" ? PR_STEPS : SNIPPET_STEPS;
 
   useEffect(() => {
     if (status !== "ANALYZING") return;
 
     const interval = setInterval(() => {
-      setStepIndex((prev) =>
-        prev < ANALYSIS_STEPS.length - 1 ? prev + 1 : prev,
-      );
+      setStepIndex((prev) => (prev < activeSteps.length - 1 ? prev + 1 : prev));
     }, 2200);
 
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status, activeSteps.length]);
+
+  const handleModeSwitch = (nextMode) => {
+    if (isBusy) return;
+    setMode(nextMode);
+    setError(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
 
-    if (!code.trim()) {
+    if (mode === "SNIPPET" && !code.trim()) {
       setError("Please paste some Java source code before submitting.");
+      return;
+    }
+
+    if (mode === "GITHUB_PR" && !prUrl.trim()) {
+      setError("Please enter a GitHub Pull Request URL.");
       return;
     }
 
     setStatus("ANALYZING");
     setStepIndex(0);
-    setError(null);
 
     try {
-      const createdReview = await submitCodeReview(code);
+      const createdReview =
+        mode === "GITHUB_PR"
+          ? await submitGitHubPrReview(prUrl.trim())
+          : await submitCodeReview(code);
+
       setStatus("COMPLETE");
 
       setTimeout(() => {
@@ -84,6 +126,7 @@ function SubmitReviewPage() {
       } else {
         const backendMessage =
           err.response?.data?.fieldErrors?.code ||
+          err.response?.data?.fieldErrors?.prUrl ||
           err.response?.data?.message ||
           "Unable to connect to the ReviewX backend. Make sure Spring Boot is running on port 8080.";
         setError(backendMessage);
@@ -91,30 +134,74 @@ function SubmitReviewPage() {
     }
   };
 
-  const currentStep = ANALYSIS_STEPS[stepIndex];
+  const currentStep = activeSteps[stepIndex];
   const lineCount = code ? code.split(/\r?\n/).length : 0;
 
   return (
     <div className="page-transition">
       <div className="page-header">
-        <h1>Submit Java Code for Review</h1>
+        <h1>New AI Code Review</h1>
         <p>
-          Paste a Java class or method below to detect bugs, security flaws, and
-          quality issues.
+          Analyze a standalone code snippet or audit an entire GitHub Pull
+          Request automatically.
         </p>
       </div>
 
       <div className="card">
+        <div className="mode-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "SNIPPET"}
+            className={`mode-tab ${mode === "SNIPPET" ? "active" : ""}`}
+            onClick={() => handleModeSwitch("SNIPPET")}
+            disabled={isBusy}
+          >
+            Paste Code Snippet
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "GITHUB_PR"}
+            className={`mode-tab ${mode === "GITHUB_PR" ? "active" : ""}`}
+            onClick={() => handleModeSwitch("GITHUB_PR")}
+            disabled={isBusy}
+          >
+            GitHub Pull Request
+          </button>
+        </div>
+
         {error && <div className="alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          <textarea
-            className="code-textarea"
-            placeholder="Paste your Java source code here..."
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            disabled={isBusy}
-          />
+          {mode === "SNIPPET" ? (
+            <textarea
+              className="code-textarea"
+              placeholder="Paste your Java source code here..."
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              disabled={isBusy}
+            />
+          ) : (
+            <div className="pr-input-group">
+              <label htmlFor="pr-url-input" className="input-label">
+                Pull Request URL
+              </label>
+              <input
+                id="pr-url-input"
+                type="url"
+                className="text-input"
+                placeholder="https://github.com/owner/repository/pull/123"
+                value={prUrl}
+                onChange={(e) => setPrUrl(e.target.value)}
+                disabled={isBusy}
+              />
+              <p className="input-hint">
+                Works with any public GitHub repository Pull Request. Changed
+                source diffs are fetched and mapped automatically.
+              </p>
+            </div>
+          )}
 
           <div className="form-actions">
             <div className="form-buttons">
@@ -124,28 +211,38 @@ function SubmitReviewPage() {
                 disabled={isBusy}
               >
                 {status === "ANALYZING"
-                  ? "Analyzing Code..."
+                  ? mode === "GITHUB_PR"
+                    ? "Reviewing Pull Request..."
+                    : "Analyzing Code..."
                   : status === "COMPLETE"
                     ? "Opening Report..."
-                    : "Analyze Code"}
+                    : mode === "GITHUB_PR"
+                      ? "Review Pull Request"
+                      : "Analyze Code"}
               </button>
 
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => {
-                  setCode(SAMPLE_JAVA_CODE);
+                  if (mode === "GITHUB_PR") {
+                    setPrUrl(SAMPLE_PR_URL);
+                  } else {
+                    setCode(SAMPLE_JAVA_CODE);
+                  }
                   setError(null);
                 }}
                 disabled={isBusy}
               >
-                Load Sample Code
+                {mode === "GITHUB_PR" ? "Load Sample PR" : "Load Sample Code"}
               </button>
             </div>
 
-            <span className="line-counter">
-              {lineCount} {lineCount === 1 ? "line" : "lines"}
-            </span>
+            {mode === "SNIPPET" && (
+              <span className="line-counter">
+                {lineCount} {lineCount === 1 ? "line" : "lines"}
+              </span>
+            )}
           </div>
         </form>
 

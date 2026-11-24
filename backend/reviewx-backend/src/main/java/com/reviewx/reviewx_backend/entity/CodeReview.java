@@ -56,6 +56,16 @@ public class CodeReview {
 	@OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true )
 	private List<ReviewFinding> findings = new ArrayList<>();
 	
+	@Column(name = "source_type", nullable = false, length = 20)
+    private String sourceType = "SNIPPET";
+
+    @Column(name = "pr_url", length = 500)
+    private String prUrl;
+
+    @Column(name = "pr_title", length = 300)
+    private String prTitle;
+    
+	
 	public CodeReview() {
     }
 

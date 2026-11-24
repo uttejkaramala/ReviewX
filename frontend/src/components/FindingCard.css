@@ -68,3 +68,14 @@
   border-color: var(--border-strong);
   box-shadow: var(--shadow-md);
 }
+
+.finding-file-tag {
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--bg-muted);
+  border: 1px solid var(--border-strong);
+  padding: 0.14rem 0.5rem;
+  border-radius: 5px;
+}

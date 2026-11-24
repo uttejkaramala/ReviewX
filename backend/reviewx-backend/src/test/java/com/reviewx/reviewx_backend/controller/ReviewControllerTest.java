@@ -37,15 +37,18 @@ class ReviewControllerTest {
 
     @Test
     void createReview_ValidRequest_Returns201Created() throws Exception {
-        ReviewResponse mockResponse = new ReviewResponse(
-                1L,
-                "public class Demo {}",
-                ReviewStatus.COMPLETED,
-                "Mock analysis completed: found 0 issues.",
-                0,
-                List.of(),
-                Instant.now()
-        );
+    	ReviewResponse mockResponse = new ReviewResponse(
+    	        1L,
+    	        "SNIPPET",
+    	        null,
+    	        null,
+    	        "public class Demo {}",
+    	        ReviewStatus.COMPLETED,
+    	        "Mock analysis completed: found 0 issues.",
+    	        0,
+    	        List.of(),
+    	        Instant.now()
+    	);
         when(reviewService.submitCodeReview(any(CreateReviewRequest.class))).thenReturn(mockResponse);
 
         mockMvc.perform(post("/api/reviews")

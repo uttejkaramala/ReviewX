@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.reviewx.reviewx_backend.dto.CreateReviewRequest;
 import com.reviewx.reviewx_backend.dto.FindingResponse;
+import com.reviewx.reviewx_backend.dto.GitHubPrReviewRequest;
 import com.reviewx.reviewx_backend.dto.ReviewResponse;
 import com.reviewx.reviewx_backend.dto.UpdateFindingStatusRequest;
 import com.reviewx.reviewx_backend.service.ReviewService;
@@ -56,4 +57,12 @@ public class ReviewController {
         FindingResponse updated = reviewService.updateFindingStatus(id, request.status());
         return ResponseEntity.ok(updated);
     }
+	
+	@PostMapping("/reviews/github-pr")
+    public ResponseEntity<ReviewResponse> createGitHubPrReview(
+            @Valid @RequestBody GitHubPrReviewRequest request) {
+        ReviewResponse created = reviewService.createGitHubPrReview(request.prUrl());
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+	
 }

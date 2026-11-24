@@ -31,7 +31,7 @@ public class GeminiCodeAnalyzer implements CodeAnalyzer {
             3. lineNumber MUST match the exact 1-based line number shown at the start of each line.
             4. explanation should clearly explain WHY the issue matters in production.
             5. suggestedFix should provide concise, idiomatic Java replacement code.
-            6. filePath should be null for standalone code snippets.
+            6. If the input contains "=== FILE: <path> ===" headers (a Pull Request diff), set filePath to that exact relative file path for each finding and focus primarily on added (+) lines and their surrounding context. For standalone snippets without file headers, set filePath to null.
             7. If the code is clean and has no issues, return an empty findings list and a positive summary.
             """;
 

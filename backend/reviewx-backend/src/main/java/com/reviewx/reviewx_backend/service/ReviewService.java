@@ -22,6 +22,11 @@ import com.reviewx.reviewx_backend.entity.SeverityLevel;
 import com.reviewx.reviewx_backend.enums.FindingStatus;
 import com.reviewx.reviewx_backend.enums.ReviewStatus;
 import com.reviewx.reviewx_backend.exception.ResourceNotFoundException;
+import com.reviewx.reviewx_backend.github.GitHubApiClient;
+import com.reviewx.reviewx_backend.github.PullRequestCoordinates;
+import com.reviewx.reviewx_backend.github.PullRequestDetails;
+import com.reviewx.reviewx_backend.github.PullRequestDiffFormatter;
+import com.reviewx.reviewx_backend.github.PullRequestUrlParser;
 import com.reviewx.reviewx_backend.repository.CodeReviewRepository;
 import com.reviewx.reviewx_backend.repository.FindingCategoryRepository;
 import com.reviewx.reviewx_backend.repository.ReviewFindingRepository;
@@ -35,18 +40,28 @@ public class ReviewService {
     private final ReviewFindingRepository reviewFindingRepository;
     private final FindingCategoryRepository categoryRepository;
     private final SeverityLevelRepository severityRepository;
+    private final PullRequestUrlParser pullRequestUrlParser;
+    private final GitHubApiClient gitHubApiClient;
+    private final PullRequestDiffFormatter pullRequestDiffFormatter;
+ 
 
     public ReviewService(
             CodeAnalyzer codeAnalyzer,
             CodeReviewRepository codeReviewRepository,
             ReviewFindingRepository reviewFindingRepository,
             FindingCategoryRepository categoryRepository,
-            SeverityLevelRepository severityRepository) {
+            SeverityLevelRepository severityRepository,
+            PullRequestUrlParser pullRequestUrlParser,
+            GitHubApiClient gitHubApiClient,
+            PullRequestDiffFormatter pullRequestDiffFormatter) {
         this.codeAnalyzer = codeAnalyzer;
         this.codeReviewRepository = codeReviewRepository;
         this.reviewFindingRepository = reviewFindingRepository;
         this.categoryRepository = categoryRepository;
         this.severityRepository = severityRepository;
+        this.pullRequestUrlParser = pullRequestUrlParser;
+        this.gitHubApiClient = gitHubApiClient;
+        this.pullRequestDiffFormatter = pullRequestDiffFormatter;
     }
     
     @Transactional
@@ -115,6 +130,42 @@ public class ReviewService {
                 .or(() -> severityRepository.findByName("MEDIUM"))
                 .orElseThrow(() -> new IllegalStateException("Reference severity data missing in database"));
     }
+    
+    @Transactional
+    public ReviewResponse createGitHubPrReview(String rawPrUrl) {
+        PullRequestCoordinates coords = pullRequestUrlParser.parse(rawPrUrl);
+        PullRequestDetails prDetails = gitHubApiClient.fetchPullRequest(coords);
+        String formattedDiff = pullRequestDiffFormatter.formatForAnalysis(prDetails);
+
+        AnalysisResult analysis = codeAnalyzer.analyze(formattedDiff);
+
+        CodeReview review = new CodeReview();
+        review.setSourceType("GITHUB_PR");
+        review.setPrUrl(prDetails.canonicalUrl());
+        review.setPrTitle(prDetails.title());
+        review.setSubmittedCode(formattedDiff);
+        review.setStatus(ReviewStatus.COMPLETED);
+        review.setSummary(analysis.summary());
+
+        for (AnalyzedFinding item : analysis.findings()) {
+        	 FindingCategory category = resolveCategory(item.categoryName());
+             SeverityLevel severity = resolveSeverity(item.severityName());
+             
+            ReviewFinding finding = new ReviewFinding();
+            finding.setFilePath(item.filePath());
+            finding.setLineNumber(item.lineNumber());
+            finding.setTitle(item.title());
+            finding.setCategory(category);
+            finding.setSeverity(severity);
+            finding.setExplanation(item.explanation());
+            finding.setSuggestedFix(item.suggestedFix());
+            finding.setStatus(FindingStatus.OPEN);
+            review.addFinding(finding);
+        }
+
+        CodeReview saved = codeReviewRepository.save(review);
+        return toReviewResponse(saved, true);
+    }
 
     private ReviewResponse toReviewResponse(CodeReview review, boolean includeDetails) {
         List<FindingResponse> findingDtos = includeDetails
@@ -128,6 +179,9 @@ public class ReviewService {
 
         return new ReviewResponse(
                 review.getId(),
+                review.getSourceType(),
+                review.getPrUrl(),
+                review.getPrTitle(),
                 includeDetails ? review.getSubmittedCode() : null,
                 review.getStatus(),
                 review.getSummary(),

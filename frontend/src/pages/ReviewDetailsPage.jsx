@@ -11,6 +11,7 @@ function ReviewDetailsPage() {
   const [error, setError] = useState(null);
   const [selectedFindingId, setSelectedFindingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [fileFilter, setFileFilter] = useState("ALL");
 
   useEffect(() => {
     const fetchReview = async () => {
@@ -46,7 +47,12 @@ function ReviewDetailsPage() {
   const handleSelectFinding = (finding) => {
     setSelectedFindingId(finding.id);
     if (finding.lineNumber) {
-      const lineEl = document.getElementById(`code-line-${finding.lineNumber}`);
+      const targetKey = finding.filePath
+        ? `${finding.filePath}:${finding.lineNumber}`
+        : `line:${finding.lineNumber}`;
+      const lineEl = document.querySelector(
+        `[data-line-key="${CSS.escape(targetKey)}"]`,
+      );
       if (lineEl) {
         lineEl.scrollIntoView({ behavior: "smooth", block: "center" });
       }
@@ -83,16 +89,118 @@ function ReviewDetailsPage() {
     );
   }
 
-  const codeLines = (review.submittedCode || "").split(/\r?\n/);
+  const isGitHubPr = review.sourceType === "GITHUB_PR";
+  const rawLines = (review.submittedCode || "").split(/\r?\n/);
+
+  // Track active file header & line number for both snippets and formatted PR diffs
+  const { parsedLines } = rawLines.reduce(
+    (acc, raw, idx) => {
+      if (!isGitHubPr) {
+        const num = idx + 1;
+        acc.parsedLines.push({
+          displayText: raw,
+          displayNum: num,
+          sign: "",
+          filePath: null,
+          lineKey: `line:${num}`,
+          kind: "normal",
+        });
+        return acc;
+      }
+
+      const fileHeaderMatch = raw.match(
+        /^=== FILE:\s+(.+?)(?:\s+\(status:.*)?\s*===$/,
+      );
+      if (fileHeaderMatch) {
+        acc.currentFile = fileHeaderMatch[1].trim();
+        acc.parsedLines.push({
+          displayText: raw,
+          displayNum: "",
+          sign: "",
+          filePath: acc.currentFile,
+          lineKey: null,
+          kind: "file-header",
+        });
+        return acc;
+      }
+
+      const addedMatch = raw.match(/^\s*(\d+)\s+\+\s\|\s?(.*)$/);
+      if (addedMatch) {
+        const num = Number(addedMatch[1]);
+        acc.parsedLines.push({
+          displayText: addedMatch[2],
+          displayNum: num,
+          sign: "+",
+          filePath: acc.currentFile,
+          lineKey: acc.currentFile
+            ? `${acc.currentFile}:${num}`
+            : `line:${num}`,
+          kind: "added",
+        });
+        return acc;
+      }
+
+      const contextMatch = raw.match(/^\s*(\d+)\s+\|\s?(.*)$/);
+      if (contextMatch) {
+        const num = Number(contextMatch[1]);
+        acc.parsedLines.push({
+          displayText: contextMatch[2],
+          displayNum: num,
+          sign: "",
+          filePath: acc.currentFile,
+          lineKey: acc.currentFile
+            ? `${acc.currentFile}:${num}`
+            : `line:${num}`,
+          kind: "normal",
+        });
+        return acc;
+      }
+
+      const removedMatch = raw.match(/^\s*-\s\|\s?(.*)$/);
+      if (removedMatch) {
+        acc.parsedLines.push({
+          displayText: removedMatch[1],
+          displayNum: "",
+          sign: "-",
+          filePath: acc.currentFile,
+          lineKey: null,
+          kind: "removed",
+        });
+        return acc;
+      }
+
+      acc.parsedLines.push({
+        displayText: raw,
+        displayNum: "",
+        sign: "",
+        filePath: acc.currentFile,
+        lineKey: null,
+        kind: raw.startsWith("@@") ? "hunk" : "meta",
+      });
+      return acc;
+    },
+    { currentFile: null, parsedLines: [] },
+  );
+
   const selectedFinding = review.findings.find(
     (f) => f.id === selectedFindingId,
   );
-  const highlightedLine = selectedFinding?.lineNumber || null;
+  const selectedLineKey = selectedFinding?.lineNumber
+    ? selectedFinding.filePath
+      ? `${selectedFinding.filePath}:${selectedFinding.lineNumber}`
+      : `line:${selectedFinding.lineNumber}`
+    : null;
 
-  const issueLineNumbers = new Set(
+  const openLineKeys = new Set(
     review.findings
       .filter((f) => f.status === "OPEN" && f.lineNumber)
-      .map((f) => f.lineNumber),
+      .map((f) =>
+        f.filePath ? `${f.filePath}:${f.lineNumber}` : `line:${f.lineNumber}`,
+      ),
+  );
+
+  const uniqueFiles = Array.from(
+    new Set(review.findings.map((f) => f.filePath).filter(Boolean)),
   );
 
   const openCount = review.findings.filter((f) => f.status === "OPEN").length;
@@ -103,15 +211,37 @@ function ReviewDetailsPage() {
     (f) => f.status === "DISMISSED",
   ).length;
 
-  const filteredFindings = review.findings.filter((f) =>
-    statusFilter === "ALL" ? true : f.status === statusFilter,
-  );
+  const filteredFindings = review.findings.filter((f) => {
+    const matchesStatus =
+      statusFilter === "ALL" ? true : f.status === statusFilter;
+    const matchesFile = fileFilter === "ALL" ? true : f.filePath === fileFilter;
+    return matchesStatus && matchesFile;
+  });
 
   return (
     <div className="page-transition">
       <div className="page-header-row">
         <div className="page-header">
-          <h1>Review #{review.id}</h1>
+          {isGitHubPr && (
+            <div className="pr-meta-row">
+              <span className="badge badge-category">GitHub Pull Request</span>
+              {review.prUrl && (
+                <a
+                  href={review.prUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="pr-link"
+                >
+                  View on GitHub ↗
+                </a>
+              )}
+            </div>
+          )}
+          <h1>
+            {isGitHubPr && review.prTitle
+              ? review.prTitle
+              : `Review #${review.id}`}
+          </h1>
           <p>{review.summary}</p>
         </div>
         <Link to="/" className="btn btn-primary">
@@ -135,41 +265,75 @@ function ReviewDetailsPage() {
           </span>
         </div>
 
-        <div className="filter-pills">
-          {["ALL", "OPEN", "RESOLVED", "DISMISSED"].map((status) => (
-            <button
-              key={status}
-              type="button"
-              className={`pill-btn ${statusFilter === status ? "active" : ""}`}
-              onClick={() => setStatusFilter(status)}
+        <div className="filter-controls">
+          {uniqueFiles.length > 1 && (
+            <select
+              className="file-select"
+              value={fileFilter}
+              onChange={(e) => setFileFilter(e.target.value)}
+              aria-label="Filter findings by file"
             >
-              {status === "ALL" ? "All Issues" : status}
-            </button>
-          ))}
+              <option value="ALL">All Files ({uniqueFiles.length})</option>
+              {uniqueFiles.map((path) => (
+                <option key={path} value={path}>
+                  {path}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <div className="filter-pills">
+            {["ALL", "OPEN", "RESOLVED", "DISMISSED"].map((status) => (
+              <button
+                key={status}
+                type="button"
+                className={`pill-btn ${statusFilter === status ? "active" : ""}`}
+                onClick={() => setStatusFilter(status)}
+              >
+                {status === "ALL" ? "All Issues" : status}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="split-layout">
         <div className="code-panel">
           <div className="code-panel-header">
-            <span>Submitted Source Code</span>
-            <span>{codeLines.length} lines</span>
+            <span>
+              {isGitHubPr ? "Pull Request Diff" : "Submitted Source Code"}
+            </span>
+            <span>{rawLines.length} lines</span>
           </div>
 
           <div className="code-viewer">
-            {codeLines.map((lineText, index) => {
-              const lineNum = index + 1;
-              const isHighlighted = highlightedLine === lineNum;
-              const hasOpenIssue = issueLineNumbers.has(lineNum);
+            {parsedLines.map((line, index) => {
+              const isHighlighted =
+                line.lineKey && selectedLineKey === line.lineKey;
+              const hasOpenIssue =
+                line.lineKey && openLineKeys.has(line.lineKey);
 
               return (
                 <div
-                  key={lineNum}
-                  id={`code-line-${lineNum}`}
-                  className={`code-line ${hasOpenIssue ? "code-line-issue" : ""} ${isHighlighted ? "code-line-highlighted" : ""}`}
+                  key={index}
+                  data-line-key={line.lineKey || undefined}
+                  className={[
+                    "code-line",
+                    line.kind === "file-header" ? "code-line-file-header" : "",
+                    line.kind === "hunk" ? "code-line-hunk" : "",
+                    line.kind === "added" ? "code-line-added" : "",
+                    line.kind === "removed" ? "code-line-removed" : "",
+                    hasOpenIssue ? "code-line-issue" : "",
+                    isHighlighted ? "code-line-highlighted" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                 >
-                  <span className="line-number">{lineNum}</span>
-                  <span className="line-content">{lineText || " "}</span>
+                  <span className="line-number">{line.displayNum}</span>
+                  {isGitHubPr && <span className="diff-sign">{line.sign}</span>}
+                  <span className="line-content">
+                    {line.displayText || " "}
+                  </span>
                 </div>
               );
             })}
@@ -179,7 +343,7 @@ function ReviewDetailsPage() {
         <div>
           {filteredFindings.length === 0 ? (
             <div className="card state-box">
-              No findings match the selected filter.
+              No findings match the selected filters.
             </div>
           ) : (
             filteredFindings.map((finding) => (

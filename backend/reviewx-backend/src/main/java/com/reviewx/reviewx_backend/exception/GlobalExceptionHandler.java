@@ -55,6 +55,34 @@ public class GlobalExceptionHandler {
 
 	    return ResponseEntity.badRequest().body(error);
 	}
+	
+	 @ExceptionHandler(IllegalArgumentException.class)
+	    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+	            IllegalArgumentException ex) {
+
+	        ErrorResponse error = ErrorResponse.builder()
+	                .timestamp(Instant.now())
+	                .status(HttpStatus.BAD_REQUEST.value())
+	                .error("Bad Request")
+	                .message(ex.getMessage())
+	                .build();
+
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+	    }
+	 
+	 @ExceptionHandler(IllegalStateException.class)
+	    public ResponseEntity<ErrorResponse> handleIllegalStateException(
+	            IllegalStateException ex) {
+
+	        ErrorResponse error = ErrorResponse.builder()
+	                .timestamp(Instant.now())
+	                .status(HttpStatus.BAD_GATEWAY.value())
+	                .error("Bad Gateway")
+	                .message(ex.getMessage())
+	                .build();
+
+	        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
+	    }
 
 	@ExceptionHandler(AiAnalysisException.class)
     public ResponseEntity<ErrorResponse> handleAiAnalysisException(AiAnalysisException ex) {

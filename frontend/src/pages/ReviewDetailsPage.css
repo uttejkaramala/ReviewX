@@ -174,3 +174,103 @@
   height: 190px;
   margin-bottom: 1rem;
 }
+
+.pr-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.pr-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-red);
+  text-decoration: none;
+}
+
+.pr-link:hover {
+  text-decoration: underline;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.file-select {
+  padding: 0.34rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Diff Gutter & Line Styling inside Left Viewer */
+.diff-sign {
+  width: 1.35rem;
+  text-align: center;
+  font-weight: 800;
+  user-select: none;
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.code-line-file-header {
+  background-color: #1e293b;
+  color: #f8fafc;
+  font-weight: 700;
+  padding-top: 0.42rem;
+  padding-bottom: 0.42rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid #334155;
+  border-bottom: 1px solid #334155;
+}
+
+.code-line-hunk {
+  background-color: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.code-line-added {
+  background-color: rgba(16, 185, 129, 0.16);
+  border-left-color: #10b981;
+}
+
+.code-line-added .line-number,
+.code-line-added .diff-sign {
+  color: #34d399;
+}
+
+.code-line-added .line-content {
+  color: #ecfdf5;
+}
+
+.code-line-removed {
+  background-color: rgba(239, 68, 68, 0.16);
+  border-left-color: #ef4444;
+}
+
+.code-line-removed .line-number,
+.code-line-removed .diff-sign {
+  color: #f87171;
+}
+
+.code-line-removed .line-content {
+  color: #fca5a5;
+  text-decoration: line-through;
+  text-decoration-color: rgba(248, 113, 113, 0.55);
+}
+
+/* Keep active AI finding highlight dominant when clicked */
+.code-line-highlighted {
+  background-color: rgba(220, 38, 38, 0.34);
+  border-left-color: #ef4444;
+}

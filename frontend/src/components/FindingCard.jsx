@@ -33,6 +33,11 @@ function FindingCard({ finding, isSelected, onSelect, onStatusUpdated }) {
             {finding.severity}
           </span>
           <span className="badge badge-category">{finding.category}</span>
+          {finding.filePath && (
+            <span className="finding-file-tag" title={finding.filePath}>
+              {finding.filePath}
+            </span>
+          )}
           {finding.lineNumber && (
             <span className="finding-line-tag">Line {finding.lineNumber}</span>
           )}

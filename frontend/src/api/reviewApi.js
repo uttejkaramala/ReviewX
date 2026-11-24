@@ -27,3 +27,9 @@ export const updateFindingStatus = async (findingId, status) => {
   });
   return response.data;
 };
+
+// POST /api/reviews/github-pr -> returns ReviewResponse (201 Created)
+export const submitGitHubPrReview = async (prUrl) => {
+  const response = await axiosClient.post("/reviews/github-pr", { prUrl });
+  return response.data;
+};

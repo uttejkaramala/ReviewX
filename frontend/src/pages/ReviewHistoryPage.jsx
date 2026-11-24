@@ -94,7 +94,14 @@ function ReviewHistoryPage() {
             <div key={review.id} className="card history-card">
               <div>
                 <div className="history-card-header">
-                  <span className="history-id">Review #{review.id}</span>
+                  <span className="history-id">
+                    {review.sourceType === "GITHUB_PR" && review.prTitle
+                      ? `#${review.id} — ${review.prTitle}`
+                      : `Review #${review.id}`}
+                  </span>
+                  {review.sourceType === "GITHUB_PR" && (
+                    <span className="badge badge-category">GitHub PR</span>
+                  )}
                   <span
                     className={`badge ${review.findingCount > 0 ? "badge-status-OPEN" : "badge-status-RESOLVED"}`}
                   >
